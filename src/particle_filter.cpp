@@ -43,11 +43,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
   std::default_random_engine gen;
   
   // Update position for each particle
-  for (int i = 0; i < num_particles; i++)
+  for (Particle cur_particle : particles)
   {
-    // Current particle
-    Particle cur_particle = particles[i];
-    
     // Calculate the mean for the x, y and theta
     double new_x_mean = cur_particle.x + (std::abs(yaw_rate) < 0.001 ?
       velocity * delta_t * cos(cur_particle.theta) :
@@ -71,21 +68,16 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
   // Iterate through observations
-  for (int obs_i = 0; obs_i < observations.size(); obs_i++)
+  for (LandmarkObs cur_obs : observations)
   {
-    // Current observation
-    LandmarkObs cur_obs = observations[obs_i];
-    
     // Distance to nearest prediction
     double min_distance = INFINITY;
     // Nearest prediction id
     int min_id = 0;
     
-    for (int pred_i = 0; pred_i < predicted.size(); pred_i++)
+    // For each predicted landmark
+    for (LandmarkObs cur_pred : predicted)
     {
-      // Current prediction
-      LandmarkObs cur_pred = predicted[obs_i];
-      
       // Distance from current observation to current prediction
       double cur_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
