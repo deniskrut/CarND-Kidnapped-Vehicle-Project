@@ -109,8 +109,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       // Translate and rotate each landmark from vehicle coordinate system to map's coordinate system
       LandmarkObs landmark_t;
       landmark_t.id = cur_obs.id;
-      landmark_t.x = cur_obs.x * cos(cur_particle.theta + M_PI) + cur_obs.y * sin(cur_particle.theta + M_PI) - cur_particle.x;
-      landmark_t.y = cur_obs.x * sin(cur_particle.theta + M_PI) + cur_obs.y * cos(cur_particle.theta + M_PI) - cur_particle.y;
+      landmark_t.x = -1 * cur_obs.x * cos(cur_particle.theta + M_PI) - cur_obs.y * sin(cur_particle.theta + M_PI) - cur_particle.x;
+      landmark_t.y = -1 * cur_obs.x * sin(cur_particle.theta + M_PI) - cur_obs.y * cos(cur_particle.theta + M_PI) - cur_particle.y;
       observations_t.push_back(landmark_t);
     }
     
