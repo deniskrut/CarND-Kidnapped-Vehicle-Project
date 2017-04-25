@@ -99,15 +99,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
 	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
 	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
-	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation 
-	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
-	//   for the fact that the map's y-axis actually points downwards.)
-	//   http://planning.cs.uiuc.edu/node99.html
+  
+  // For every particle
+  for (Particle cur_particle : particles)
+  {
+    // Convert each observation in map's coordinate system
+    std::vector<LandmarkObs> observations_t;
+    
+    // For each observation
+    for (LandmarkObs cur_obs : observations)
+    {
+      // Translate and rotate each landmark from vehicle coordinate system to map's coordinate system
+      LandmarkObs landmark_t;
+      landmark_t.id = cur_obs.id;
+      landmark_t.x = cur_obs.x * cos(cur_particle.theta + M_PI) + cur_obs.y * sin(cur_particle.theta + M_PI) - cur_particle.x;
+      landmark_t.y = cur_obs.x * sin(cur_particle.theta + M_PI) + cur_obs.y * cos(cur_particle.theta + M_PI) - cur_particle.y;
+      observations_t.push_back(landmark_t);
+    }
+  }
 }
 
 void ParticleFilter::resample() {
