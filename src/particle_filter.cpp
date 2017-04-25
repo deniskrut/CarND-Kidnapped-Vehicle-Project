@@ -34,6 +34,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     Particle cur_particle {/*id*/ i, /*x*/ cur_x, /*y*/ cur_y, /* theta */ cur_theta, /* weight */ 1};
     particles.push_back(cur_particle);
   }
+  
+  is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
