@@ -32,7 +32,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     double cur_y = dist_y(gen);
     double cur_theta = dist_theta(gen);
     Particle cur_particle {/*id*/ i, /*x*/ cur_x, /*y*/ cur_y, /* theta */ cur_theta, /* weight */ 1};
-    particles.push_back(cur_particle);
+    particles[i] = cur_particle;
   }
   
   is_initialized = true;
@@ -104,7 +104,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   for (Particle cur_particle : particles)
   {
     // Convert each observation in map's coordinate system
-    std::vector<LandmarkObs> observations_t(observations.size());
+    std::vector<LandmarkObs> observations_t;
     
     // For each observation
     for (LandmarkObs cur_obs : observations)
