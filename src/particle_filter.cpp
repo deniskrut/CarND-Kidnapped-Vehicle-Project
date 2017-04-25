@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <unordered_map>
 
 #include "particle_filter.h"
 
@@ -108,6 +109,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     // Obtain predicted landmark list
     std::vector<LandmarkObs> predicted;
+    std::unordered_map<int, LandmarkObs> predictedMap;
     
     // For each landmark
     for (Map::single_landmark_s landmark : map_landmarks.landmark_list) {
@@ -121,6 +123,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       if (dist(prediction.x, prediction.y, cur_particle.x, cur_particle.y) <= sensor_range) {
         // Add landmark to list of predicted landmarks
         predicted.push_back(prediction);
+        predictedMap.emplace(prediction.id, prediction);
       }
     }
     
@@ -132,13 +135,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // For each observation
     for (LandmarkObs cur_obs : observations)
     {
-      // Assumption: index of landmark in a map is equal to id of landmark - 1
       // Get current prediction
-      Map::single_landmark_s cur_pred = map_landmarks.landmark_list[cur_obs.id - 1];
+      LandmarkObs cur_pred = predictedMap[cur_obs.id];
       
       // Differences in x and y between measurement and prediction
-      double dx = cur_obs.x - cur_pred.x_f;
-      double dy = cur_obs.y - cur_pred.y_f;
+      double dx = cur_obs.x - cur_pred.x;
+      double dy = cur_obs.y - cur_pred.y;
       
       // Multiply current weight running product by weight for given observation
       double new_weight = 1 / (M_PI * 2 * std_landmark[0] * std_landmark[1]) *
