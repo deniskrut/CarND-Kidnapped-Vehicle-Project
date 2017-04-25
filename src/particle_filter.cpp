@@ -106,40 +106,31 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // Current particle
     Particle& cur_particle = particles[particle_index];
     
-    // Convert each observation in map's coordinate system
-    std::vector<LandmarkObs> observations_t;
-    
-    // For each observation
-    for (LandmarkObs cur_obs : observations)
-    {
-      // Translate and rotate each landmark from vehicle coordinate system to map's coordinate system
-      LandmarkObs landmark_t;
-      landmark_t.id = cur_obs.id;
-      landmark_t.x = -1 * cur_obs.x * cos(cur_particle.theta + M_PI) - cur_obs.y * sin(cur_particle.theta + M_PI) - cur_particle.x;
-      landmark_t.y = -1 * cur_obs.x * sin(cur_particle.theta + M_PI) - cur_obs.y * cos(cur_particle.theta + M_PI) - cur_particle.y;
-      observations_t.push_back(landmark_t);
-    }
-    
     // Obtain predicted landmark list
     std::vector<LandmarkObs> predicted;
     
     // For each landmark
     for (Map::single_landmark_s landmark : map_landmarks.landmark_list) {
+      // Translate and rotate each landmark from map's coordinate system to vehicle's coordinate system
+      LandmarkObs prediction;
+      prediction.id = landmark.id_i;
+      prediction.x = landmark.x_f * cos(cur_particle.theta) - landmark.y_f * sin(cur_particle.theta) + cur_particle.x;
+      prediction.y = landmark.x_f * sin(cur_particle.theta) + landmark.y_f * cos(cur_particle.theta) + cur_particle.y;
+      
       // If landmark is within sensor range
-      if (dist(landmark.x_f, landmark.y_f, cur_particle.x, cur_particle.y) <= sensor_range) {
-        // Convert landmark to a predicted observation
-        LandmarkObs prediction {landmark.id_i, landmark.x_f, landmark.y_f};
+      if (dist(prediction.x, prediction.y, cur_particle.x, cur_particle.y) <= sensor_range) {
+        // Add landmark to list of predicted landmarks
         predicted.push_back(prediction);
       }
     }
     
     // Associate every observation with predicted landmark location
-    dataAssociation(predicted, observations_t);
+    dataAssociation(predicted, observations);
     
     // Calculate the new weight
     double new_weight_product = 1;
     // For each observation
-    for (LandmarkObs cur_obs : observations_t)
+    for (LandmarkObs cur_obs : observations)
     {
       // Assumption: index of landmark in a map is equal to id of landmark - 1
       // Get current prediction
