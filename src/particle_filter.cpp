@@ -97,11 +97,8 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-  
   // For every particle
-  for (Particle cur_particle : particles)
+  for (Particle& cur_particle : particles)
   {
     // Convert each observation in map's coordinate system
     std::vector<LandmarkObs> observations_t;
@@ -132,6 +129,27 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     // Associate every observation with predicted landmark location
     dataAssociation(predicted, observations_t);
+    
+    // Calculate the new weight
+    double new_weight = 1;
+    // For each observation
+    for (LandmarkObs cur_obs : observations_t)
+    {
+      // Assumption: index of landmark in a map is equal to id of landmark - 1
+      // Get current prediction
+      Map::single_landmark_s cur_pred = map_landmarks.landmark_list[cur_obs.id - 1];
+      
+      // Differences in x and y between measurement and prediction
+      double dx = cur_obs.x - cur_pred.x_f;
+      double dy = cur_obs.y - cur_pred.y_f;
+      
+      // Multiply current weight running product by weight for given observation
+      new_weight *= 1 / (M_PI * 2 * std_landmark[0] * std_landmark[1]) *
+        std::exp(-1 * (pow(dx, 2) / pow(std_landmark[0], 2) + pow(dy, 2) / pow(std_landmark[1], 2)));
+    }
+    
+    // Assign the new weight to the particle
+    cur_particle.weight = new_weight;
   }
 }
 
