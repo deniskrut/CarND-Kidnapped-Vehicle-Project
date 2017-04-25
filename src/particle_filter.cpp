@@ -68,7 +68,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
   // Iterate through observations
-  for (LandmarkObs cur_obs : observations)
+  for (LandmarkObs& cur_obs : observations)
   {
     // Distance to nearest prediction
     double min_distance = INFINITY;
