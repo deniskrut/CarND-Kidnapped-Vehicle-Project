@@ -153,11 +153,32 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }
 }
 
-void ParticleFilter::resample() {
-	// TODO: Resample particles with replacement with probability proportional to their weight. 
-	// NOTE: You may find std::discrete_distribution helpful here.
-	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-
+void ParticleFilter::resample() {  
+  // Create vector with weights for all particles
+  std::vector<double> weights;
+  
+  // Fill vector of weights
+  for (Particle cur_particle : particles)
+  {
+    weights.push_back(cur_particle.weight);
+  }
+  
+  // Create a discrete distribution and a generator
+  std::default_random_engine gen;
+  std::discrete_distribution<int> distribution {weights.begin(), weights.end()};
+  
+  // Create vector for new particles
+  std::vector<Particle> new_particles;
+  
+  // Draw new particles based on distribution
+  for (int i = 0; i < num_particles; i++) {
+    int cur_particle_i = distribution(gen);
+    Particle cur_particle = particles[cur_particle_i];
+    new_particles.push_back(cur_particle);
+  }
+  
+  // Make new particles current particles
+  particles = new_particles;
 }
 
 void ParticleFilter::write(std::string filename) {
