@@ -105,6 +105,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   {
     // Convert each observation in map's coordinate system
     std::vector<LandmarkObs> observations_t;
+    observations_t.resize(observations.size());
     
     // For each observation
     for (LandmarkObs cur_obs : observations)
