@@ -14,7 +14,7 @@
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   // Number of priticles
-  num_particles = 50;
+  num_particles = 10000;
   
   // random number generator
   std::default_random_engine gen;
@@ -24,15 +24,18 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   std::normal_distribution<double> dist_y(y, std[1]);
   std::normal_distribution<double> dist_theta(theta, std[2]);
   
-  // Initialize the weights
+  // Initialize the weights and particles
   particles.resize(num_particles);
+  weights.resize(num_particles);
   for (int i = 0; i < num_particles; i++)
   {
     double cur_x = dist_x(gen);
     double cur_y = dist_y(gen);
     double cur_theta = dist_theta(gen);
-    Particle cur_particle {/*id*/ i, /*x*/ cur_x, /*y*/ cur_y, /* theta */ cur_theta, /* weight */ 1};
+    double cur_weight = 1.;
+    Particle cur_particle {/*id*/ i, /*x*/ cur_x, /*y*/ cur_y, /* theta */ cur_theta, /* weight */ cur_weight};
     particles[i] = cur_particle;
+    weights[i] = cur_weight;
   }
   
   is_initialized = true;
@@ -98,8 +101,11 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
   // For every particle
-  for (Particle& cur_particle : particles)
+  for (int particle_index = 0; particle_index < particles.size(); particle_index ++)
   {
+    // Current particle
+    Particle& cur_particle = particles[particle_index];
+    
     // Convert each observation in map's coordinate system
     std::vector<LandmarkObs> observations_t;
     
@@ -131,7 +137,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     dataAssociation(predicted, observations_t);
     
     // Calculate the new weight
-    double new_weight = 1;
+    double new_weight_product = 1;
     // For each observation
     for (LandmarkObs cur_obs : observations_t)
     {
@@ -144,25 +150,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       double dy = cur_obs.y - cur_pred.y_f;
       
       // Multiply current weight running product by weight for given observation
-      new_weight *= 1 / (M_PI * 2 * std_landmark[0] * std_landmark[1]) *
+      double new_weight = 1 / (M_PI * 2 * std_landmark[0] * std_landmark[1]) *
         std::exp(-1 * (pow(dx, 2) / pow(std_landmark[0], 2) + pow(dy, 2) / pow(std_landmark[1], 2)));
+      
+      // Multiply running product of weights to the new weight
+      new_weight_product *= new_weight;
     }
     
     // Assign the new weight to the particle
-    cur_particle.weight = new_weight;
+    cur_particle.weight = new_weight_product;
+    weights[particle_index] = new_weight_product;
   }
 }
 
-void ParticleFilter::resample() {  
-  // Create vector with weights for all particles
-  std::vector<double> weights;
-  
-  // Fill vector of weights
-  for (Particle cur_particle : particles)
-  {
-    weights.push_back(cur_particle.weight);
-  }
-  
+void ParticleFilter::resample() {
   // Create a discrete distribution and a generator
   std::default_random_engine gen;
   std::discrete_distribution<int> distribution {weights.begin(), weights.end()};
