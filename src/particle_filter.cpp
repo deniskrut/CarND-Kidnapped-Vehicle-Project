@@ -116,6 +116,22 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       landmark_t.y = cur_obs.x * sin(cur_particle.theta + M_PI) + cur_obs.y * cos(cur_particle.theta + M_PI) - cur_particle.y;
       observations_t.push_back(landmark_t);
     }
+    
+    // Obtain predicted landmark list
+    std::vector<LandmarkObs> predicted;
+    
+    // For each landmark
+    for (Map::single_landmark_s landmark : map_landmarks.landmark_list) {
+      // If landmark is within sensor range
+      if (dist(landmark.x_f, landmark.y_f, cur_particle.x, cur_particle.y) <= sensor_range) {
+        // Convert landmark to a predicted observation
+        LandmarkObs prediction {landmark.id_i, landmark.x_f, landmark.y_f};
+        predicted.push_back(prediction);
+      }
+    }
+    
+    // Associate every observation with predicted landmark location
+    dataAssociation(predicted, observations_t);
   }
 }
 
