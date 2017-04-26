@@ -33,16 +33,18 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     double cur_y = dist_y(gen);
     double cur_theta = dist_theta(gen);
     double cur_weight = 1.;
+    
     Particle cur_particle {/*id*/ i, /*x*/ cur_x, /*y*/ cur_y, /* theta */ cur_theta, /* weight */ cur_weight};
     particles[i] = cur_particle;
     weights[i] = cur_weight;
   }
   
+  // Mark object as initialized
   is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
-  // random number generator
+  // Random number generator
   std::default_random_engine gen;
   
   // Update position for each particle
@@ -79,7 +81,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
     int min_id = 0;
     
     // For each predicted landmark
-    for (LandmarkObs cur_pred : predicted)
+    for (const LandmarkObs& cur_pred : predicted)
     {
       // Distance from current observation to current prediction
       double cur_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
@@ -110,7 +112,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     std::vector<LandmarkObs> observations_t;
     
     // For each observation
-    for (LandmarkObs cur_obs : observations)
+    for (const LandmarkObs& cur_obs : observations)
     {
       // Translate and rotate each landmark from vehicle coordinate system to map's coordinate system
       LandmarkObs landmark_t;
@@ -124,7 +126,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     std::vector<LandmarkObs> predicted;
     
     // For each landmark
-    for (Map::single_landmark_s landmark : map_landmarks.landmark_list) {
+    for (const Map::single_landmark_s& landmark : map_landmarks.landmark_list) {
       // If landmark is within sensor range
       if (dist(landmark.x_f, landmark.y_f, cur_particle.x, cur_particle.y) <= sensor_range) {
         // Convert landmark to a predicted observation
@@ -140,7 +142,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double new_weight_product = 1;
     
     // For each observation
-    for (LandmarkObs cur_obs : observations_t)
+    for (const LandmarkObs& cur_obs : observations_t)
     {
       // Assumption: index of landmark in a map is equal to id of landmark - 1
       // Get current prediction
@@ -176,8 +178,13 @@ void ParticleFilter::resample() {
   
   // Draw new particles based on distribution
   for (int i = 0; i < num_particles; i++) {
+    // Generate particle index using the distribution
     int cur_particle_i = distribution(gen);
+    
+    // Get a particle from the list of particles
     Particle cur_particle = particles[cur_particle_i];
+    
+    // Push back particle to the list of new particles
     new_particles.push_back(cur_particle);
   }
   
