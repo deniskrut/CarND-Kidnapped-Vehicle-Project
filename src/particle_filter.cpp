@@ -47,13 +47,13 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
   std::default_random_engine gen;
   
   // Update position for each particle
-  for (Particle cur_particle : particles)
+  for (Particle& cur_particle : particles)
   {
     // Calculate the mean for the x, y and theta
-    double new_x_mean = cur_particle.x + (std::abs(yaw_rate) < 0.001 ?
+    double new_x_mean = cur_particle.x + (std::abs(yaw_rate) < 0.0000001 ?
       velocity * delta_t * cos(cur_particle.theta) :
       velocity / yaw_rate * (sin(cur_particle.theta + yaw_rate * delta_t) - sin(cur_particle.theta)));
-    double new_y_mean = cur_particle.y + (std::abs(yaw_rate) < 0.001 ?
+    double new_y_mean = cur_particle.y + (std::abs(yaw_rate) < 0.0000001 ?
       velocity * delta_t * sin(cur_particle.theta) :
       velocity / yaw_rate * (cos(cur_particle.theta) - cos(cur_particle.theta + yaw_rate * delta_t)));
     double new_theta_mean = cur_particle.theta + yaw_rate * delta_t;
