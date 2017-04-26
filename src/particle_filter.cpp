@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-#include <unordered_map>
 
 #include "particle_filter.h"
 
@@ -102,56 +101,67 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
   // For every particle
-  for (int particle_index = 0; particle_index < particles.size(); particle_index ++)
+  for (int particle_index = 0; particle_index < particles.size(); particle_index++)
   {
     // Current particle
     Particle& cur_particle = particles[particle_index];
     
+    // Convert each observation in map's coordinate system
+    std::vector<LandmarkObs> observations_t;
+    
+    // For each observation
+    for (LandmarkObs cur_obs : observations)
+    {
+      // Translate and rotate each landmark from vehicle coordinate system to map's coordinate system
+      LandmarkObs landmark_t;
+      landmark_t.id = cur_obs.id;
+      landmark_t.x = cur_obs.x * cos(cur_particle.theta) - cur_obs.y * sin(cur_particle.theta) + cur_particle.x;
+      landmark_t.y = cur_obs.x * sin(cur_particle.theta) + cur_obs.y * cos(cur_particle.theta) + cur_particle.y;
+      observations_t.push_back(landmark_t);
+    }
+    
     // Obtain predicted landmark list
     std::vector<LandmarkObs> predicted;
-    std::unordered_map<int, LandmarkObs> predictedMap;
     
     // For each landmark
     for (Map::single_landmark_s landmark : map_landmarks.landmark_list) {
-      // Translate and rotate each landmark from map's coordinate system to vehicle's coordinate system
-      LandmarkObs prediction;
-      prediction.id = landmark.id_i;
-      prediction.x = landmark.x_f * cos(cur_particle.theta) - landmark.y_f * sin(cur_particle.theta) + cur_particle.x;
-      prediction.y = landmark.x_f * sin(cur_particle.theta) + landmark.y_f * cos(cur_particle.theta) + cur_particle.y;
-      
       // If landmark is within sensor range
-      if (dist(prediction.x, prediction.y, cur_particle.x, cur_particle.y) <= sensor_range) {
-        // Add landmark to list of predicted landmarks
+      if (dist(landmark.x_f, landmark.y_f, cur_particle.x, cur_particle.y) <= sensor_range) {
+        // Convert landmark to a predicted observation
+        LandmarkObs prediction {landmark.id_i, landmark.x_f, landmark.y_f};
         predicted.push_back(prediction);
-        predictedMap.emplace(prediction.id, prediction);
       }
     }
     
     // Associate every observation with predicted landmark location
-    dataAssociation(predicted, observations);
+    dataAssociation(predicted, observations_t);
     
     // Calculate the new weight
     double new_weight_product = 1;
+    
     // For each observation
-    for (LandmarkObs cur_obs : observations)
+    for (LandmarkObs cur_obs : observations_t)
     {
+      // Assumption: index of landmark in a map is equal to id of landmark - 1
       // Get current prediction
-      LandmarkObs cur_pred = predictedMap[cur_obs.id];
+      Map::single_landmark_s cur_pred = map_landmarks.landmark_list[cur_obs.id - 1];
       
       // Differences in x and y between measurement and prediction
-      double dx = cur_obs.x - cur_pred.x;
-      double dy = cur_obs.y - cur_pred.y;
+      double dx = cur_obs.x - cur_pred.x_f;
+      double dy = cur_obs.y - cur_pred.y_f;
       
-      // Multiply current weight running product by weight for given observation
+      // Calculate the new weight
       double new_weight = 1 / (M_PI * 2 * std_landmark[0] * std_landmark[1]) *
         std::exp(-1 * (pow(dx, 2) / pow(std_landmark[0], 2) + pow(dy, 2) / pow(std_landmark[1], 2)));
       
-      // Multiply running product of weights to the new weight
+      // Multiply running product of weights by the new weight
       new_weight_product *= new_weight;
     }
     
     // Assign the new weight to the particle
     cur_particle.weight = new_weight_product;
+    
+    // Assign weight to the list of weights
     weights[particle_index] = new_weight_product;
   }
 }
