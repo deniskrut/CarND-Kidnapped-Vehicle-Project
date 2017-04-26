@@ -16,7 +16,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   // Number of priticles
   num_particles = 100;
   
-  // random number generator
+  // Random number generator
   std::default_random_engine gen;
   
   // Normal distributions for initial coordinates
